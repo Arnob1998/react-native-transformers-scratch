@@ -13,7 +13,8 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nevronus.reactnativetransformersscratch"
     },
     "android": {
       "adaptiveIcon": {
@@ -28,8 +29,18 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "onnxruntime-react-native",
-      "expo-router"
+      [
+        "onnxruntime-react-native"
+      ],
+      [
+        "expo-router"
+      ],
+      [
+        "expo-dev-launcher",
+        {
+          "launchMode": "most-recent"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

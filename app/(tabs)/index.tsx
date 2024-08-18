@@ -1,14 +1,20 @@
-import { Image, StyleSheet, Platform, Button } from 'react-native';
+import { Image, StyleSheet, Platform, Button, Alert } from 'react-native';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Pipeline } from "react-native-transformers";
+import * as ort from 'onnxruntime-react-native';
+// import { Asset } from 'expo-asset';
 
 export default function HomeScreen() {
+  console.log("At home")
+
   const loadModel = async () => {
+    console.log("start")
     await Pipeline.TextGeneration.init("Felladrin/onnx-Llama-160M-Chat-v1", "onnx/decoder_model_merged.onnx");
+    console.log("end")
   };
 
   return (
