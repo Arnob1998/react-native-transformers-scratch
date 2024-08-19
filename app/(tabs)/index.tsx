@@ -15,6 +15,8 @@ import { ThemedView } from "@/components/ThemedView";
 // import { Pipeline } from "react-native-transformers";
 import * as ort from "onnxruntime-react-native";
 import { Asset } from "expo-asset";
+import { tokenizer } from '@/constants/tokenizer';
+// import * as FileSystem from 'expo-file-system';
 import { env, AutoTokenizer, PreTrainedTokenizer } from "@xenova/transformers";
 
 export default function HomeScreen() {
@@ -45,7 +47,7 @@ export default function HomeScreen() {
     }
   }
 
-  async function runModel() {
+  async function runMNISTModel() {
     try {
       // Prepare model input data
       // Note: In real use case, you must set the inputData to the actual input values
@@ -70,6 +72,76 @@ export default function HomeScreen() {
     }
   }
 
+  async function loadDistilModel() {
+    try {
+      console.log("start");
+      const assets = await Asset.loadAsync(require("@/assets/distilbert-base-uncased-finetuned-sst-2-english/model_quantized.onnx"));
+      const modelUri = assets[0].localUri;
+      console.log("modelUri ", modelUri);
+      console.log("end");
+      if (!modelUri) {
+        console.log("failed to get model URI", `${assets[0]}`);
+      } else {
+        // load model from model url path
+        myModel = await ort.InferenceSession.create(modelUri);
+        console.log(
+          "model loaded successfully",
+          `input names: ${myModel.inputNames}, output names: ${myModel.outputNames}`
+        );
+
+        return modelUri
+      }
+    } catch (e) {
+      Alert.alert("failed to load model", `${e}`);
+      throw e;
+    }
+  }
+
+  async function loadDistilTokenizer() {
+    try {
+      console.log("start");
+      return tokenizer
+    } catch (e) {
+      Alert.alert("failed to load model", `${e}`);
+      console.log(e)
+      throw e;
+    }
+  }
+
+
+  const loadDistilPipelineModel = async () => {
+    try {
+      // const session = await loadDistilModel();
+      const test = tokenize()
+      console.log(test)
+
+    } catch (e) {
+      Alert.alert("failed to inference model in loadDistilPipelineModel", `${e}`);
+      console.log(e)
+      throw e;
+    }
+  };
+
+  async function runInference(session, inputIds) {
+    const feeds = { input_ids: inputIds };
+    const output = await session.run(feeds);
+    console.log(output);
+  }
+  
+  async function processText(session, text, tokenizerConfig) {
+    const inputIds = tokenize(text, tokenizerConfig);
+    await runInference(session, inputIds);
+  }
+
+  function tokenize(text) {
+    // Example: Simple tokenization process
+    const tokens = text.toLowerCase().split(' ').map(word => tokenizer[word] || tokenizer['[UNK]']);
+    const inputIds = [101, ...tokens, 102]; // Add [CLS] and [SEP] tokens
+    return new Int32Array(inputIds);
+  }
+  
+
+
   // const loadPipelineModel = async () => {
   //   console.log("start");
   //   await Pipeline.TextGeneration.init(
@@ -79,11 +151,21 @@ export default function HomeScreen() {
   //   console.log("end");
   // };
 
-  const loadTransformerPipelineModel = async () => {
+  const loadTransformerPipelineToken = async () => {
     try {
+      const tokenizerAsset = Asset.loadAsync(require("@/assets/distilbert-base-uncased-finetuned-sst-2-english/tokenizer.json"));
+      // await tokenizerAsset.downloadAsync();
+      // const tokenizerUri = tokenizerAsset.localUri;
+      // const tokenizerJson = await FileSystem.readAsStringAsync(tokenizerUri);
+      // const tokenizerConfig = JSON.parse(tokenizerJson);
+
+      // const tokenizerInstance = await AutoTokenizer.from_pretrained({
+      //   modelId: 'distilbert-base-uncased-finetuned-sst-2-english',
+      //   configPath: tokenizerUri,
+      // });
 
     } catch (e) {
-      Alert.alert("failed to inference model in loadTransformerPipelineModel", `${e}`);
+      Alert.alert("failed to inference model in loadTransformerPipelineToken", `${e}`);
       throw e;
     }
   };
@@ -110,7 +192,11 @@ export default function HomeScreen() {
         }}
       />
       <Button title="loadMNISTModel" onPress={loadMNISTModel} />
-      <Button title="Run Model" onPress={runModel} />
+      <Button title="Run Model" onPress={runMNISTModel} />
+      <Button title="loadDistilModel" onPress={loadDistilModel}/> 
+      <Button title="loadDistilTokenizer" onPress={loadDistilTokenizer}/> 
+      <Button title="loadDistilPipelineModel" onPress={loadDistilPipelineModel}/> 
+      <Button title="loadTransformerPipelineToken" onPress={loadTransformerPipelineToken}/> 
       {/* <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Step 1: Try it</ThemedText>
         <ThemedText>
