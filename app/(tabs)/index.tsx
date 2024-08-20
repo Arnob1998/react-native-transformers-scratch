@@ -122,74 +122,6 @@ export default function HomeScreen() {
     }
   };
 
-  async function runInference(session, inputIds) {
-    const feeds = { input_ids: inputIds };
-    const output = await session.run(feeds);
-    console.log(output);
-  }
-  
-  async function processText(session, text, tokenizerConfig) {
-    const inputIds = tokenize(text, tokenizerConfig);
-    await runInference(session, inputIds);
-  }
-
-  function tokenize(text) {
-    // Example: Simple tokenization process
-    const tokens = text.toLowerCase().split(' ').map(word => tokenizer[word] || tokenizer['[UNK]']);
-    const inputIds = [101, ...tokens, 102]; // Add [CLS] and [SEP] tokens
-    return new Int32Array(inputIds);
-  }
-  
-
-
-  // const loadPipelineModel = async () => {
-  //   console.log("start");
-  //   await Pipeline.TextGeneration.init(
-  //     "Felladrin/onnx-Llama-160M-Chat-v1",
-  //     "onnx/decoder_model_merged.onnx"
-  //   );
-  //   console.log("end");
-  // };
-
-  async function checkFilePaths() {
-    const basePath = FileSystem.bundleDirectory + 'models/distilbert-base-uncased-finetuned-sst-2-english/';
-  
-    const tokenizerJsonUri = basePath + 'tokenizer.json';
-    const tokenizerConfigUri = basePath + 'tokenizer_config.json';
-    const vocabTxtUri = basePath + 'vocab.txt';
-  
-    // Log the paths
-    console.log("Tokenizer JSON URI:", tokenizerJsonUri);
-    console.log("Tokenizer Config URI:", tokenizerConfigUri);
-    console.log("Vocab Txt URI:", vocabTxtUri);
-  
-    // Check if the files exist
-    const tokenizerJsonExists = await FileSystem.getInfoAsync(tokenizerJsonUri);
-    const tokenizerConfigExists = await FileSystem.getInfoAsync(tokenizerConfigUri);
-    const vocabTxtExists = await FileSystem.getInfoAsync(vocabTxtUri);
-  
-    console.log("Tokenizer JSON exists:", tokenizerJsonExists);
-    console.log("Tokenizer Config exists:", tokenizerConfigExists);
-    console.log("Vocab Txt exists:", vocabTxtExists);
-    
-  }
-
-  // const downloadAndSaveFile = async (url, filename) => {
-  //   try {
-  //     // Define the path where you want to save the file
-  //     const fileUri = FileSystem.documentDirectory + filename;
-      
-  //     // Download the file
-  //     const response = await FileSystem.downloadAsync(url, fileUri);
-      
-  //     console.log('File downloaded to:', response.uri);
-  //     return response.uri; // Return the URI for further use
-  //   } catch (error) {
-  //     console.error('Error downloading file:', error);
-  //     return null;
-  //   }
-  // };
-
   const saveFileToFolder = async (url, folderName, filename) => {
     try {
       // Define the directory path
@@ -256,31 +188,6 @@ export default function HomeScreen() {
         const results = await myModel.run(tokens);
         console.log(results);
       }
-
-      // Download and store -- end issue - [ReferenceError: Property 'TextDecoder' doesn't exist]
-  
-      // if (fileUri) {
-      //   // You can now use the fileUri to read or process the file later
-      //   console.log('File is ready to use:', fileUri);
-      // }
-    // env.localModelPath = FileSystem.bundleDirectory + 'models/';
-    // env.allowRemoteModels = false;
-
-    // console.log("Local model path set to:", env.localModelPath);
-    //   const tokenizer = await AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english");
-    //   console.log(tokenizer)
-    //   console.log("end");
-      // const tokenizer = await AutoTokenizer.from_pretrained("models/bert-base-uncased");
-      // await tokenizerAsset.downloadAsync();
-      // const tokenizerUri = tokenizerAsset.localUri;
-      // const tokenizerJson = await FileSystem.readAsStringAsync(tokenizerUri);
-      // const tokenizerConfig = JSON.parse(tokenizerJson);
-
-      // const tokenizerInstance = await AutoTokenizer.from_pretrained({
-      //   modelId: 'distilbert-base-uncased-finetuned-sst-2-english',
-      //   configPath: tokenizerUri,
-      // });
-
     } catch (e) {
       Alert.alert("failed to inference model in loadTransformerPipelineToken", `${e}`);
       console.log(e)
