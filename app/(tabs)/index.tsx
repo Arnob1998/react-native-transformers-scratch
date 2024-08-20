@@ -14,9 +14,9 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 // import { Pipeline } from "react-native-transformers";
 import * as ort from "onnxruntime-react-native";
-import { Asset } from "expo-asset";
+import { Asset, useAssets } from "expo-asset";
 import { tokenizer } from '@/constants/tokenizer';
-// import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system';
 import { env, AutoTokenizer, PreTrainedTokenizer } from "@xenova/transformers";
 
 export default function HomeScreen() {
@@ -151,9 +151,126 @@ export default function HomeScreen() {
   //   console.log("end");
   // };
 
+  async function checkFilePaths() {
+    const basePath = FileSystem.bundleDirectory + 'models/distilbert-base-uncased-finetuned-sst-2-english/';
+  
+    const tokenizerJsonUri = basePath + 'tokenizer.json';
+    const tokenizerConfigUri = basePath + 'tokenizer_config.json';
+    const vocabTxtUri = basePath + 'vocab.txt';
+  
+    // Log the paths
+    console.log("Tokenizer JSON URI:", tokenizerJsonUri);
+    console.log("Tokenizer Config URI:", tokenizerConfigUri);
+    console.log("Vocab Txt URI:", vocabTxtUri);
+  
+    // Check if the files exist
+    const tokenizerJsonExists = await FileSystem.getInfoAsync(tokenizerJsonUri);
+    const tokenizerConfigExists = await FileSystem.getInfoAsync(tokenizerConfigUri);
+    const vocabTxtExists = await FileSystem.getInfoAsync(vocabTxtUri);
+  
+    console.log("Tokenizer JSON exists:", tokenizerJsonExists);
+    console.log("Tokenizer Config exists:", tokenizerConfigExists);
+    console.log("Vocab Txt exists:", vocabTxtExists);
+    
+  }
+
+  // const downloadAndSaveFile = async (url, filename) => {
+  //   try {
+  //     // Define the path where you want to save the file
+  //     const fileUri = FileSystem.documentDirectory + filename;
+      
+  //     // Download the file
+  //     const response = await FileSystem.downloadAsync(url, fileUri);
+      
+  //     console.log('File downloaded to:', response.uri);
+  //     return response.uri; // Return the URI for further use
+  //   } catch (error) {
+  //     console.error('Error downloading file:', error);
+  //     return null;
+  //   }
+  // };
+
+  const saveFileToFolder = async (url, folderName, filename) => {
+    try {
+      // Define the directory path
+      const directoryUri = FileSystem.documentDirectory + folderName;
+      
+      // Create the directory if it doesn't exist
+      const { exists } = await FileSystem.getInfoAsync(directoryUri);
+      if (!exists) {
+        await FileSystem.makeDirectoryAsync(directoryUri, { intermediates: true });
+      }
+      
+      // Define the file path
+      const fileUri = directoryUri + '/' + filename;
+      
+      // Download the file
+      const response = await FileSystem.downloadAsync(url, fileUri);
+      
+      console.log('File downloaded to:', response.uri);
+      return response.uri; // Return the URI for further use
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      return null;
+    }
+  }
+
   const loadTransformerPipelineToken = async () => {
     try {
-      const tokenizerAsset = Asset.loadAsync(require("@/assets/distilbert-base-uncased-finetuned-sst-2-english/tokenizer.json"));
+      // Download and store -- start
+      const tokenizer_url = 'https://raw.githubusercontent.com/Arnob1998/react-native-transformers-scratch/main/assets/distilbert-base-uncased-finetuned-sst-2-english/tokenizer.json';
+      const tokenizer_filename = 'tokenizer.json';
+      const tokenizer_config_filename = 'tokenizer_config.json';
+      const tokenizer_config_url = "https://raw.githubusercontent.com/Arnob1998/react-native-transformers-scratch/main/assets/distilbert-base-uncased-finetuned-sst-2-english/tokenizer_config.json"
+      const folderName = 'distilbert-base-uncased-finetuned-sst-2-english'; // Example folder structure
+      // const fileUri = await downloadAndSaveFile(url, filename);
+
+      const tokenizerfileUri = await saveFileToFolder(tokenizer_url, folderName, tokenizer_filename);
+      const tokenizer_configUri = await saveFileToFolder(tokenizer_config_url, folderName, tokenizer_config_filename);
+  
+      if (tokenizerfileUri && tokenizer_configUri) {
+        // You can now use the fileUri to read or process the file later
+        console.log('File is ready to use:', tokenizerfileUri, tokenizer_configUri);
+
+        env.localModelPath = FileSystem.documentDirectory;
+        env.allowRemoteModels = false; 
+        const text = "Hello how are you"
+        console.log("Local model path set to:", env.localModelPath);
+        const tokenizer = await AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english");
+        const tokens = tokenizer(text)
+        console.log("tokens", tokens);
+
+        console.log("loading model");
+        const assets = await Asset.loadAsync(require("@/assets/distilbert-base-uncased-finetuned-sst-2-english/model_quantized.onnx"));
+        const modelUri = assets[0].localUri;
+        console.log("modelUri ", modelUri);
+        if (!modelUri) {
+          console.log("failed to get model URI", `${assets[0]}`);
+        } 
+          // load model from model url path
+          myModel = await ort.InferenceSession.create(modelUri);
+          console.log(
+            "model loaded successfully",
+            `input names: ${myModel.inputNames}, output names: ${myModel.outputNames}`)
+        // Run inference
+        const results = await myModel.run(tokens);
+        console.log(results);
+      }
+
+      // Download and store -- end issue - [ReferenceError: Property 'TextDecoder' doesn't exist]
+  
+      // if (fileUri) {
+      //   // You can now use the fileUri to read or process the file later
+      //   console.log('File is ready to use:', fileUri);
+      // }
+    // env.localModelPath = FileSystem.bundleDirectory + 'models/';
+    // env.allowRemoteModels = false;
+
+    // console.log("Local model path set to:", env.localModelPath);
+    //   const tokenizer = await AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english");
+    //   console.log(tokenizer)
+    //   console.log("end");
+      // const tokenizer = await AutoTokenizer.from_pretrained("models/bert-base-uncased");
       // await tokenizerAsset.downloadAsync();
       // const tokenizerUri = tokenizerAsset.localUri;
       // const tokenizerJson = await FileSystem.readAsStringAsync(tokenizerUri);
@@ -166,6 +283,7 @@ export default function HomeScreen() {
 
     } catch (e) {
       Alert.alert("failed to inference model in loadTransformerPipelineToken", `${e}`);
+      console.log(e)
       throw e;
     }
   };

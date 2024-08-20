@@ -5,6 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import * as DevClient from 'expo-dev-client';
+import "../polyfill"
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 

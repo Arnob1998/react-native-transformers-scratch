@@ -40,6 +40,14 @@
         {
           "launchMode": "most-recent"
         }
+      ],
+      [
+        "expo-asset",
+        {
+          "assets": [
+            "./assets/distilbert-base-uncased-finetuned-sst-2-english/tokenizer.json"
+          ]
+        }
       ]
     ],
     "experiments": {
@@ -50,7 +58,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "105cefa0-49fe-4356-b773-e13e85afedc2"
+        "projectId": "d4145ad1-d152-403d-92be-1e46cf575235"
       }
     }
   }
