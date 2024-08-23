@@ -67,6 +67,8 @@ async function generate(
     truncation: true,
   });
 
+  console.log(" input_ids ", input_ids)
+
   // Clear caches
   model.initializeFeed();
   let output_text = "";

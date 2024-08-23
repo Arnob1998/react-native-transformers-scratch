@@ -21,19 +21,24 @@ import * as FileSystem from "expo-file-system";
 import { Pipeline } from "@/extensions/transformer-pipeline";
 import { downloadFilesFromCollection } from "@/extensions/downloader";
 import { ModelCollections } from "@/constants/ModelCollections";
-import { SendHorizontal, Plus } from "lucide-react-native";
+import { SendHorizontal, Plus, Square, Settings, MessageSquare, ChevronDown} from "lucide-react-native";
+import { useModelStore } from "@/store/models";
+import { Link } from "expo-router";
 
 export default function HomeScreen() {
-  // console.log("At home");
-  const [progress, setProgress] = useState<number>();
-  const [input, setInput] = useState<string>("Hi");
   const [output, setOutput] = useState<string>();
   const [textInput, onChangeTextInput] = useState<string>("");
+  const selected_model = useModelStore((state) => state.model);
+  const [model_active, setModelActive] = useState(false);
+  
+  useEffect(()=>{
+    console.log("Selected model : ", selected_model)
+  },[])
 
-  const CustomTransformerPipeline = async () => {
+  const CustomTransformerPipeline = async (prompt) => {
     await downloadFilesFromCollection(
-      ModelCollections["Llama-160M-Chat-v1"],
-      "Llama-160M-Chat-v1"
+      ModelCollections[selected_model],
+      selected_model
     );
     console.log("start");
     await Pipeline.TextGeneration.init(
@@ -44,9 +49,12 @@ export default function HomeScreen() {
         max_tokens: 100,
       }
     );
+
     console.log("AutoComplete start");
-    console.log("input : ", input);
-    await Pipeline.TextGeneration.generate(input, setOutput);
+    console.log("input : ", prompt);
+    setModelActive(true);
+    await Pipeline.TextGeneration.generate(prompt, setOutput);
+    setModelActive(false);
     console.log("AutoComplete end");
   };
 
@@ -59,11 +67,16 @@ export default function HomeScreen() {
           justifyContent: "space-between", //Centered vertically
           alignItems: "center", // Centered horizontally
           flexDirection: "row",
+          paddingHorizontal:15
         }}
       >
-        <ThemedText>History</ThemedText>
-        <ThemedText>Model</ThemedText>
-        <ThemedText>Setting</ThemedText>
+        <MessageSquare color={"white"} size={27}/>
+        <TouchableOpacity style={{ backgroundColor:"#2f2f2f",      	borderRadius: 10,
+        borderWidth: 1, }}>
+        <ThemedText style={{fontSize:14 ,fontWeight:"600", paddingHorizontal:13, paddingVertical:5,}}><Link href={"/model-selection"}>{selected_model} <ChevronDown color={"white"} size={16}/></Link></ThemedText>
+        </TouchableOpacity>
+        
+        <Settings color={"white"}size={27} />
       </View>
       <ScrollView
         style={{ flex: 1, paddingHorizontal: 20, paddingVertical: 10 }}
@@ -100,15 +113,14 @@ export default function HomeScreen() {
           placeholder="    Type a message..."
           placeholderTextColor="white"
           onSubmitEditing={() => {
-            setInput(textInput);
-            onChangeTextInput("");
-            CustomTransformerPipeline();
-            setInput("");
+            console.log("Keyboard Entered : ", textInput)
+            CustomTransformerPipeline(textInput);
+            onChangeTextInput("")
           }}
           returnKeyType="done"
         />
         <View style={{ padding: 5 }}>
-          <SendHorizontal color={"white"} />
+          {!model_active ? <SendHorizontal color={"white"} onPress={()=>{Pipeline.TextGeneration.release();}} /> : <Square color={"white"} onPress={()=>{Pipeline.TextGeneration.release(); setModelActive(false);}} /> }
         </View>
       </View>
     </SafeAreaView>
